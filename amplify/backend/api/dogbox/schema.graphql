@@ -1,0 +1,5 @@
+type File @model {
+  id: ID!
+  name: String!
+  bytes: Int!
+}
