@@ -16,6 +16,7 @@ import { createFile as createFileMutation, deleteFile as deleteFileMutation } fr
 
 function App() {
   const [files, setFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef();
 
   useEffect(() => {
@@ -25,7 +26,6 @@ function App() {
   async function fetchFiles() {
     const apiData = await API.graphql({ query: listFiles });
     setFiles(apiData.data.listFiles.items);
-    console.log("Fetched files, new array: ", apiData.data.listFiles.items);
   }
 
   async function uploadFile() {
@@ -39,11 +39,12 @@ function App() {
       return;
     }
 
+	setUploading(true);
     const fileDbObj = {name: name, bytes: bytes};
     await API.graphql({ query: createFileMutation, variables: { input: fileDbObj } });
     await Storage.put(name, selectedFile);
     setFiles([...files, {...fileDbObj, createdAt: "just now"}]);
-    console.log("Files now:", [...files, {...fileDbObj, createdAt: "just now"}]);
+	setUploading(false);
     fileInputRef.current.value = null;
   }
 
@@ -55,7 +56,6 @@ function App() {
   }
 
   async function downloadFile({ name }) {
-    console.log("Downloading:", name);
     const signedUrl = await Storage.get(name);
     window.open(signedUrl, '_blank').focus();
   }
@@ -74,7 +74,7 @@ function App() {
             <div>
               <Grid container justify="center">
                 <Grid item>
-                  <Button variant="contained" component="label" color="primary" className="upload-button">
+                  <Button variant="contained" component="label" color="primary" className="upload-button" disabled={uploading}>
                     Upload<input type="file" hidden ref={fileInputRef} onChange={uploadFile} />
                   </Button>
                 </Grid>
